@@ -5,6 +5,13 @@
             <bing-search :options="mapOptions"></bing-search>
              <bing-map-layer name="layer-1" :visible="layerVisible"  
                                     v-on:layer-click="handleEvent">
+              <bing-map-pushpin v-for="item in countryPins" 
+                                :key="item.key"
+                                :metadata="item.metadata" 
+                                :location="item.location" 
+                                :options="item.options"
+                                >
+              </bing-map-pushpin>                                    
               <bing-map-pushpin v-for="item in pins" 
                                 :key="item.key"
                                 :metadata="item.metadata" 
@@ -19,7 +26,15 @@
                                   :options="item.infobox" >
                 </bing-map-infobox> 
               </div>
+              <div v-if="infoboxVisible" >
+                <bing-map-infobox v-for="item in countryPins" 
+                                  :key="item.infobox.key"
+                                  :location="item.infobox.location" 
+                                  :options="item.infobox" >
+                </bing-map-infobox> 
+              </div>              
              </bing-map-layer>
+             
        </bing-map>
     </div>
   </div>
@@ -45,6 +60,7 @@ export default {
         searchTitle:'Country/Port'
       },
       pins:[],
+      countryPins:[]
     };
   },
   created: function() {
@@ -62,22 +78,58 @@ export default {
           else {
             this.$set(pin.infobox,'visible', false)
           }
-        })
+        });
+        
+        this.countryPins.filter(pin => {
+          if(pin.metadata.countryName == event.meta.countryName && pin.metadata.countryId == event.meta.countryId){
+            this.$set(pin.infobox,'visible', true)
+            this.infoboxVisible = true
+          }
+          else {
+            this.$set(pin.infobox,'visible', false)
+          }
+        })        
+
       });
     },
     setMapData() {
       let APIData = this.mapData;
 
       let pinsTotalData = []
+      let countryPins = [];
       let countries = APIData.countries;
       countries.forEach(eachCountry => {
         let countryName = eachCountry.countryName
+          let pindatumCountry = {
+            key: '',
+            metadata:{},
+            location:'',
+            options:{color: 'blue' ,visible:true},
+            infobox:{visible:false}
+          }        
+          let locationObCountry = {latitude: parseFloat(eachCountry.latitude),longitude:parseFloat(eachCountry.longitude)}
+          let totalCountry = parseInt(eachCountry.alerts)+parseInt(eachCountry.exceptions)+parseInt(eachCountry.preadvice)
+          pindatumCountry.key = eachCountry.countryId;
+          pindatumCountry.metadata['countryName'] = countryName;
+          pindatumCountry.metadata['countryId'] = eachCountry.countryId;
+          pindatumCountry.location = locationObCountry
+          pindatumCountry.infobox['key'] = `infobox-${eachCountry.countryId}`
+          pindatumCountry.infobox['title'] = `${countryName} - Total cases ${totalCountry}`
+          pindatumCountry.infobox['location'] = locationObCountry
+          pindatumCountry.infobox['actions'] = [
+          { label: `Alerts ${eachCountry.alerts}`, eventHandler: function () { alert('Handler1'); } },
+          { label: `Exception ${eachCountry.exceptions}`, eventHandler: function () { alert('Handler2'); } },
+          { label: `PreAdvice ${eachCountry.preadvice}`, eventHandler: function () { alert('Handler3'); } },
+          { label: 'View all cases', eventHandler: function () { alert('Handler4'); } }
+          ]
+
+        countryPins.push(pindatumCountry)
         eachCountry.cities.forEach((city) => {
             let pindatum = {
               key: '',
               metadata:{},
               location:'',
-              options:{visible:true},
+              options:{color: 'green' ,visible:true},
               infobox:{visible:false}
             }        
               let locationObj = {latitude: parseFloat(city.latitude),longitude:parseFloat(city.longitude)}
@@ -100,7 +152,8 @@ export default {
         })
       });
 
-      this.pins = pinsTotalData
+      this.pins = pinsTotalData;
+      this.countryPins = countryPins;
     }
   }
 }
