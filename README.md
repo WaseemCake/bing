@@ -1,7 +1,3 @@
-vue-bing-maps
-
-vue-bing-maps
-=========
 
 > A Vue.js Bing Maps v8 Wrapper Library
 
@@ -74,3 +70,5 @@ License
 -------
 
 This project is licensed under [MIT License](http://en.wikipedia.org/wiki/MIT_License)
+=======
+# bing
