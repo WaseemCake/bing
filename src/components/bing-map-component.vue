@@ -194,6 +194,7 @@
                             self.initialized = true;
                         });
 
+                        self.registerEvents();
                         resolve();
                     }).catch(function(err){
                         reject(err);
