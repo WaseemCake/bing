@@ -26,6 +26,7 @@
             ></bing-map-infobox>
           </div>
         </bing-map-layer>
+
         <bing-map-layer
           name="layer-2"
           :visible="countryLayerVisible"
@@ -47,6 +48,55 @@
             ></bing-map-infobox>
           </div>
         </bing-map-layer>
+
+        <bing-map-layer
+          name="layer-3"
+          :visible="countryExcpLayerVisible"
+        >
+          <bing-map-pushpin
+            v-for="item in exceptionsPins"
+            :key="item.key"
+            :metadata="item.metadata"
+            :location="item.location"
+            :options="item.options"
+          ></bing-map-pushpin>
+        </bing-map-layer>
+
+        <bing-map-layer
+          name="layer-4"
+          :visible="countryAlertsVisible"
+        >
+          <bing-map-pushpin
+            v-for="item in alertsPins"
+            :key="item.key"
+            :metadata="item.metadata"
+            :location="item.location"
+            :options="item.options"
+          ></bing-map-pushpin>
+        </bing-map-layer>
+
+        <bing-map-layer
+          name="layer-5"
+          :visible="countryPreadviceVisible"
+        >
+          <bing-map-pushpin
+            v-for="item in preadvicePins"
+            :key="item.key"
+            :metadata="item.metadata"
+            :location="item.location"
+            :options="item.options"
+          ></bing-map-pushpin>
+        </bing-map-layer>
+
+        <div class="filters">
+            <ul>
+                <li>Show on map</li>
+                <li v-on:click="handleFilterEvent('alerts')">Alerts</li>
+                <li v-on:click="handleFilterEvent('exceptions')">Exceptions</li>
+                <li v-on:click="handleFilterEvent('preadvice')">Pre Advice</li>
+                <li v-on:click="handleFilterEvent('all')">All</li>
+            </ul>
+        </div>
       </bing-map>
     </div>
   </div>
@@ -69,13 +119,26 @@ export default {
       infoboxVisible: true,
       countryInfoboxVisible: false,
       countryLayerVisible: false,
+      countryExcpLayerVisible:false,
+      countryAlertsVisible:false,
+      countryPreadviceVisible:false,
       mapOptions: {
         zoom: 5,
         maxResults: 4,
-        searchTitle: "Country/Port"
+        searchTitle: "Country/Port",
+        countryPinColor:"#990000",
+        exceptionsPinColor:"#008000",
+        preadvicePinColor:"#8B0000",
+        alertsPinColor:"#7bd3f7",
+      },
+      mapConfiguration:{
+
       },
       pins: [],
-      countryPins: []
+      countryPins: [],
+      exceptionsPins:[],
+      alertsPing:[],
+      preAdvicePins:[]
     };
   },
   created: function() {
@@ -124,13 +187,60 @@ export default {
         this.countryLayerVisible = false;
       }
     },
+    handleFilterEvent(type) {
+      let self = this;
+      switch (type) {
+        case 'exceptions':
+          self.countryExcpLayerVisible = true;
+        break;
+      
+        case 'alerts':
+          self.countryAlertsVisible = true;
+        break;
+
+        case 'preadvice':
+          self.countryPreadviceVisible = true;
+        break;
+            
+        default:
+          break;
+      }
+    },
     setMapData() {
       let APIData = this.mapData;
       let self = this;
       let pinsTotalData = [];
       let countryPins = [];
+      let exceptionsPinsData = [];
+      let alertsPinsData = [];
+      let preadvicePinsData = [];
       let countries = APIData.countries;
       countries.forEach(eachCountry => {
+        let countryData = self.setMapCountryData(eachCountry)
+        countryPins.push(countryData);
+        
+        let exceptionData = self.setMapCountryExceptionData(eachCountry,'exceptions',self.mapOptions.exceptionsPinColor)
+        exceptionsPinsData.push(exceptionData);
+
+        let alertsData = self.setMapCountryExceptionData(eachCountry,'alerts',self.mapOptions.alertsPinColor)
+        alertsPinsData.push(alertsData);
+
+        let preadviceData = self.setMapCountryExceptionData(eachCountry,'preadvice',self.mapOptions.preadvicePinColor)
+        preadvicePinsData.push(preadviceData);
+
+        eachCountry.cities.forEach(city => {
+          let portData = self.setMapPortData(city,eachCountry)
+          pinsTotalData.push(portData);
+        });
+      });
+
+      this.exceptionsPins = exceptionsPinsData;
+      this.alertsPins = alertsPinsData;
+      this.preadvicePins = preadvicePinsData;
+      this.pins = pinsTotalData;
+      this.countryPins = countryPins;
+    },
+    setMapCountryData (eachCountry) {
         let countryName = eachCountry.countryName;
         let pindatumCountry = {
           key: "",
@@ -147,7 +257,7 @@ export default {
           parseInt(eachCountry.alerts) +
           parseInt(eachCountry.exceptions) +
           parseInt(eachCountry.preadvice);
-        let svgIcon = self.createSVGCircle(totalCountry, "#990000", "black", 1);
+        let svgIcon = this.createSVGCircle(totalCountry, this.mapOptions.countryPinColor, "black", 1,2);
         pindatumCountry.options["icon"] = svgIcon;
         pindatumCountry.key = eachCountry.countryId;
         pindatumCountry.metadata["countryName"] = countryName;
@@ -184,9 +294,9 @@ export default {
             }
           }
         ];
-
-        countryPins.push(pindatumCountry);
-        eachCountry.cities.forEach(city => {
+        return pindatumCountry;
+    },
+    setMapPortData (city,eachCountry) {
           let pindatum = {
             key: "",
             metadata: {},
@@ -203,7 +313,7 @@ export default {
             parseInt(city.exceptions) +
             parseInt(city.preadvice);
           pindatum.key = city.cityId;
-          pindatum.metadata["countryName"] = countryName;
+          pindatum.metadata["countryName"] = eachCountry.countryName;
           pindatum.metadata["name"] = city.cityName;
           pindatum.metadata["cityId"] = city.cityId;
           pindatum.location = locationObj;
@@ -236,22 +346,41 @@ export default {
               }
             }
           ];
-          pinsTotalData.push(pindatum);
-        });
-      });
 
-      this.pins = pinsTotalData;
-      this.countryPins = countryPins;
+          return pindatum;
     },
-    createSVGCircle(radius, fillColor, strokeColor, strokeWidth) {
+    setMapCountryExceptionData(country,type,pinColor){
+        let pindatumException = {
+          key: "",
+          metadata: {},
+          location: "",
+          options: { visible: true },
+        };
+        let totalCountry = 0;
+        let locationObCountry = {
+          latitude: parseFloat(country.latitude),
+          longitude: parseFloat(country.longitude)
+        };
+        totalCountry = parseInt(country[type]) 
+        let svgIcon = this.createSVGCircle(totalCountry*5, pinColor, "black", 1,2);
+        pindatumException.options["icon"] = svgIcon;
+        pindatumException.options["text"] = type.charAt(0).toUpperCase();
+        pindatumException.key = country.countryId;
+        pindatumException.metadata["countryName"] = country.countryName;
+        pindatumException.metadata["countryId"] = country.countryId;
+        pindatumException.location = locationObCountry;
+        
+        return pindatumException
+    },
+    createSVGCircle(radius, fillColor, strokeColor, strokeWidth, multiplier) {
       if (strokeColor === void 0) {
         strokeColor = "";
       }
       if (strokeWidth === void 0) {
         strokeWidth = 0;
       }
-      let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${2 *
-        radius}" height="${2 * radius}">
+      let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${multiplier *
+        radius}" height="${multiplier * radius}">
                   <circle cx="${radius}" cy="${radius}" r="${radius -
         strokeWidth}" stroke="${strokeColor}" stroke-width="${strokeWidth}" fill="${fillColor}"/>
                 </svg>`;
@@ -302,14 +431,54 @@ export default {
   left: 25%;
   width: 50%;
 }
+
 .searchBox {
   width: 85%;
 }
+
 .customSearchTitle {
   line-height: 2;
   background-color: white;
 }
+
 .as_container_search {
   left: 13%;
+}
+
+.filters {
+  position: absolute;
+  z-index: 1;
+  width: 50%;
+  bottom: 10%;
+  left: 20%;
+}
+
+.filters ul {
+  list-style-type: none;
+  text-align: left;
+  list-style-position: inside;
+  border: 1px solid #888;  
+  background-color: white;
+  padding: 5px;
+}
+
+.filters ul>li {
+  display:inline-block;
+  margin-left: 20px;
+  border: 1px solid grey;
+  padding-right: 6px;
+  padding-left: 6px;
+  padding-top: 4px;
+  text-transform: uppercase; 
+  cursor: pointer;
+  min-width: 81px;
+  text-align: center;
+}
+
+.filters ul>li:first-child {
+  margin-left: 35px;
+  margin-right: 30px;
+  border: none;
+  text-transform: none; 
 }
 </style>

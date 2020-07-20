@@ -12,7 +12,6 @@ import LayerComponent from './components/bing-layer-component.vue'
 import PushPinComponent from './components/bing-pushpin-component.vue'
 import InfoBoxComponent from './components/bing-infobox-component.vue'
 import SearchComponent from './components/bing-search-component.vue'
-import FilterComponent from './components/bing-filters-component.vue'
 
 if(!window.Promise){
     window.Promise = Promise;
@@ -28,7 +27,6 @@ export default {
         pushpin: PushPinComponent,
         infobox: InfoBoxComponent,
         search : SearchComponent,
-        filters : FilterComponent
     },
     services: {
         conversions: BingConversions
@@ -52,9 +50,6 @@ export default {
 
         Utils.logger.log('registering bing-search component...');
         Vue.component(SearchComponent.name, Vue.extend(SearchComponent)); 
-
-        Utils.logger.log('registering bing-filters component...');
-        Vue.component(FilterComponent.name, Vue.extend(SearchComponent)); 
 
         Utils.logger.log('bing map vue plugin installed!');       
     }
