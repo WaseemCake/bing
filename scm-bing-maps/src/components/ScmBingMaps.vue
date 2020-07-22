@@ -189,19 +189,27 @@ export default {
     },
     handleFilterEvent(type) {
       let self = this;
+      this.countryLayerVisible = false
+      this.layerVisible = false;
       switch (type) {
         case 'exceptions':
-          self.countryExcpLayerVisible = true;
+          self.countryExcpLayerVisible = !self.countryExcpLayerVisible;
         break;
       
         case 'alerts':
-          self.countryAlertsVisible = true;
+          self.countryAlertsVisible = !self.countryAlertsVisible;
         break;
 
         case 'preadvice':
-          self.countryPreadviceVisible = true;
+          self.countryPreadviceVisible = !self.countryPreadviceVisible;
         break;
-            
+
+        case 'all':
+          self.countryExcpLayerVisible = !self.countryExcpLayerVisible;
+          self.countryAlertsVisible = !self.countryAlertsVisible;
+          self.countryPreadviceVisible = !self.countryPreadviceVisible;
+        break;
+
         default:
           break;
       }
