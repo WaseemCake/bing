@@ -1,6 +1,6 @@
 import Vue from 'vue'
 import App from './App.vue'
-import VueBingMaps from '../../src/index' ///Users/mdwaseem/vue-bing-maps-master/src/index
+import VueBingMaps from 'waseemcake/vue-bing-maps' ///Users/mdwaseem/vue-bing-maps-master/src/index
 
 Vue.config.productionTip = false
 
